@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Dict, List, Literal, cast, Optional
+from typing import Dict, List, Literal, cast, Optional, Callable, Any
 import os
 
 from langchain_core.messages import AIMessage, SystemMessage
@@ -30,7 +30,12 @@ memory = MemorySaver()
 @asynccontextmanager
 async def make_graph(mcp_tools: Dict[str, Dict[str, str]], model: BaseChatModel):
     async with MultiServerMCPClient(mcp_tools) as client:
-        agent = create_react_agent(model, client.get_tools(), checkpointer=memory)
+        # Get MCP tools and combine with existing TOOLS
+        mcp_tool_objects = client.get_tools()
+        all_tools = TOOLS + mcp_tool_objects
+        
+        # Create agent with combined tools
+        agent = create_react_agent(model, all_tools, checkpointer=memory)
         yield agent
 
 
@@ -130,13 +135,41 @@ async def call_model(
     return {"messages": [response["messages"][-1]]}
 
 
+# Create a function to get combined tools (MCP tools + TOOLS)
+async def get_combined_tools(config: RunnableConfig) -> List[Callable[..., Any]]:
+    """Get combined tools from both TOOLS and MCP tools.
+    
+    Args:
+        config (RunnableConfig): Configuration for the run.
+        
+    Returns:
+        List[Callable[..., Any]]: Combined list of tools.
+    """
+    configuration = Configuration.from_runnable_config(config)
+    mcp_json_path = configuration.mcp_tools
+    mcp_tools_config = await utils.load_mcp_config_json(mcp_json_path)
+    mcp_tools = mcp_tools_config.get("mcpServers", {})
+    
+    async with MultiServerMCPClient(mcp_tools) as client:
+        mcp_tool_objects = client.get_tools()
+        return TOOLS + mcp_tool_objects
+
+
 # Define a new graph
 
 builder = StateGraph(State, input=InputState, config_schema=Configuration)
 
 # Define the two nodes we will cycle between
 builder.add_node(call_model)
-builder.add_node("tools", ToolNode(TOOLS))
+
+# We'll use a custom tool node function that combines TOOLS with MCP tools
+async def tool_node_with_combined_tools(state, config):
+    """A custom tool node that uses combined tools from both TOOLS and MCP tools."""
+    combined_tools = await get_combined_tools(config)
+    tool_node = ToolNode(combined_tools)
+    return await tool_node.invoke(state, config)
+
+builder.add_node("tools", tool_node_with_combined_tools)
 
 # Set the entrypoint as `call_model`
 # This means that this node is the first one called

@@ -52,6 +52,13 @@ class Configuration:
             "description": "The specific model name to use. If not provided, defaults will be used (claude-3-7-sonnet-latest for Anthropic, gpt-4o for OpenAI)."
         },
     )
+    
+    max_search_results: int = field(
+        default=int(os.getenv("MAX_SEARCH_RESULTS", "3")),
+        metadata={
+            "description": "The maximum number of search results to return from search tools."
+        },
+    )
 
     @classmethod
     def from_runnable_config(

@@ -31,4 +31,47 @@ async def search(
     return cast(list[dict[str, Any]], result)
 
 
-TOOLS: List[Callable[..., Any]] = [search]
+async def add_todo(
+    title: str,
+    due_date: Optional[str] = None,
+    assignee: Optional[str] = None,
+    checkpoints: Optional[List[str]] = None,
+    *, 
+    config: Annotated[RunnableConfig, InjectedToolArg]
+) -> dict[str, Any]:
+    """Add a new todo item to the database.
+    
+    This function takes todo information and adds it to the todo database.
+    Currently just logs the information to the console for demonstration purposes.
+    
+    Args:
+        title: The title or description of the todo item
+        due_date: When the todo item is due (optional)
+        assignee: Who is responsible for the todo item (optional)
+        checkpoints: List of checkpoints or milestones for the todo (optional)
+    
+    Returns:
+        A dictionary with the created todo information
+    """
+    todo_item = {
+        "title": title,
+        "due_date": due_date,
+        "assignee": assignee,
+        "checkpoints": checkpoints or [],
+    }
+    
+    # For now, just log to console - will be replaced with API call later
+    print(f"[TODO TOOL] Adding new todo: {todo_item}")
+    
+    return {
+        "status": "success",
+        "message": "Todo added successfully",
+        "todo": todo_item
+    }
+
+
+TOOLS: List[Callable[..., Any]] = [search, add_todo]
+
+# Note: These base tools will be combined with MCP tools in the ReAct agent.
+# The combination happens in the make_graph function in graph.py.
+# MCP tools are loaded from the configuration and added to these base tools.
