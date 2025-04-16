@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
-from typing import Dict, List, Literal, cast
+from typing import Dict, List, Literal, cast, Optional
+import os
 
 from langchain_core.messages import AIMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
@@ -14,21 +15,50 @@ from contextlib import asynccontextmanager
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.prebuilt import create_react_agent
 from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.runnables import RunnableConfig
+from langchain_core.language_models.chat_models import BaseChatModel
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
 
 memory = MemorySaver()
 
 
 @asynccontextmanager
-async def make_graph(mcp_tools: Dict[str, Dict[str, str]]):
+async def make_graph(mcp_tools: Dict[str, Dict[str, str]], model: BaseChatModel):
     async with MultiServerMCPClient(mcp_tools) as client:
-        model = ChatAnthropic(
-            model="claude-3-7-sonnet-latest", temperature=0.0, max_tokens=64000
-        )
         agent = create_react_agent(model, client.get_tools(), checkpointer=memory)
         yield agent
+
+
+def get_model(model_provider: str, model_name: Optional[str] = None) -> BaseChatModel:
+    """Get the appropriate model based on provider and name.
+    
+    Args:
+        model_provider (str): The model provider (anthropic or openai)
+        model_name (Optional[str]): The specific model name to use
+        
+    Returns:
+        BaseChatModel: A LangChain chat model
+    """
+    if model_provider.lower() == "anthropic":
+        return ChatAnthropic(
+            model=model_name or "claude-3-7-sonnet-latest", 
+            temperature=0.0, 
+            max_tokens=64000,
+            anthropic_api_key=os.getenv("ANTHROPIC_API_KEY")
+        )
+    elif model_provider.lower() == "openai":
+        return ChatOpenAI(
+            model=model_name or "gpt-4o", 
+            temperature=0.0,
+            openai_api_key=os.getenv("OPENAI_API_KEY")
+        )
+    else:
+        raise ValueError(f"Unsupported model provider: {model_provider}")
 
 
 async def call_model(
@@ -59,10 +89,17 @@ async def call_model(
     # Extract the servers configuration from mcpServers key
     mcp_tools = mcp_tools_config.get("mcpServers", {})
     print(mcp_tools)
+    
+    # Get model provider and name from configuration
+    model_provider = configuration.model_provider or "openai"
+    model_name = configuration.model_name
+    
+    # Initialize the model
+    model = get_model(model_provider, model_name)
 
     response = None
 
-    async with make_graph(mcp_tools) as my_agent:
+    async with make_graph(mcp_tools, model) as my_agent:
         # Create the messages list
         messages = [
             SystemMessage(content=system_message),

@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field, fields
 from typing import Annotated, Optional
 
 from langchain_core.runnables import RunnableConfig, ensure_config
+from dotenv import load_dotenv
 
 from react_agent import prompts
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 @dataclass(kw_only=True)
@@ -23,14 +28,28 @@ class Configuration:
     )
 
     mcp_tools: str = field(
-        default="mcp_config.json",
+        default=os.getenv("MCP_TOOLS", "mcp_config.json"),
         metadata={"description": "The path to the MCP tools configuration file."},
     )
 
     recursion_limit: int = field(
-        default=30,
+        default=int(os.getenv("RECURSION_LIMIT", "30")),
         metadata={
             "description": "The maximum number of recursive calls that Agent can make."
+        },
+    )
+    
+    model_provider: Optional[str] = field(
+        default=os.getenv("MODEL_PROVIDER", "openai"),
+        metadata={
+            "description": "The model provider to use (anthropic or openai)."
+        },
+    )
+    
+    model_name: Optional[str] = field(
+        default=os.getenv("MODEL_NAME", None),
+        metadata={
+            "description": "The specific model name to use. If not provided, defaults will be used (claude-3-7-sonnet-latest for Anthropic, gpt-4o for OpenAI)."
         },
     )
 

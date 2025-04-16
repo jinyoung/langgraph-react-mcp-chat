@@ -1,3 +1,5 @@
+uvx --refresh --from "langgraph-cli[inmem]" --with-editable . --python 3.11 langgraph dev
+
 # LangGraph ReAct MCP Chat
 
 ![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)

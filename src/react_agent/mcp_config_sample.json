@@ -1,48 +1,18 @@
 {
     "mcpServers": {
-        "desktop-commander": {
-            "command": "npx",
-            "args": [
-                "-y",
-                "@smithery/cli@latest",
-                "run",
-                "@wonderwhy-er/desktop-commander",
-                "--key",
-                "Smithery API_KEY 입력"
-            ]
+      "odoo": {
+        "command": "/opt/anaconda3/bin/python3",
+        "args": [
+          "-m",
+          "odoo_mcp"
+        ],
+        "env": {
+          "ODOO_URL": "https://uengine.odoo.com",
+          "ODOO_DB": "uengine",
+          "ODOO_USERNAME": "jyjang@uengine.org",
+          "ODOO_PASSWORD": "bca96d3d9716c1dddef9c159097aca3cb2b16352"
         },
-        "perplexity-search": {
-            "command": "npx",
-            "args": [
-                "-y",
-                "@smithery/cli@latest",
-                "run",
-                "@arjunkmrm/perplexity-search",
-                "--config",
-                "{\"perplexityApiKey\":\"Perplexity API_KEY 입력\"}"
-            ]
-        },
-        "hyperbrowser": {
-            "command": "npx",
-            "args": [
-                "-y",
-                "@smithery/cli@latest",
-                "run",
-                "@hyperbrowserai/mcp",
-                "--key",
-                "Smithery API_KEY 입력"
-            ]
-        },
-        "todoist-mcp": {
-            "command": "npx",
-            "args": [
-                "-y",
-                "@smithery/cli@latest",
-                "run",
-                "@miottid/todoist-mcp",
-                "--key",
-                "Smithery API_KEY 입력"
-            ]
-        }
+        "transport": "stdio"
+      }
     }
 }
