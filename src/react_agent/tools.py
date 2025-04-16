@@ -31,6 +31,37 @@ async def search(
     return cast(list[dict[str, Any]], result)
 
 
+async def search_internal_docs(
+    query: str, *, config: Annotated[RunnableConfig, InjectedToolArg]
+) -> dict[str, Any]:
+    """Search for internal documents in the Memento service.
+    
+    This function performs a search in the internal document database (Memento service)
+    and returns matching documents based on the query.
+    
+    Args:
+        query: The search query for finding relevant internal documents
+    
+    Returns:
+        A dictionary with the search results
+    """
+    # For now, just log to console - will be replaced with actual API call later
+    print(f"[MEMENTO TOOL] Searching internal documents for: {query}")
+    
+    # Return fallback data to simulate a successful search
+    return {
+        "status": "success",
+        "message": f"Found documents related to '{query}'",
+        "results": [
+            {
+                "title": f"{query} 결과 문서",
+                "content": f"이것은 '{query}'에 대한 검색 결과입니다.",
+                "relevance": 0.95
+            }
+        ]
+    }
+
+
 async def add_todo(
     title: str,
     due_date: Optional[str] = None,
@@ -70,7 +101,7 @@ async def add_todo(
     }
 
 
-TOOLS: List[Callable[..., Any]] = [search, add_todo]
+TOOLS: List[Callable[..., Any]] = [search, search_internal_docs, add_todo]
 
 # Note: These base tools will be combined with MCP tools in the ReAct agent.
 # The combination happens in the make_graph function in graph.py.
