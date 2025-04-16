@@ -2,10 +2,12 @@
 
 import json
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Sequence, Optional
 import aiofiles
+import os
 
 from langchain_core.messages import BaseMessage
+from react_agent.state import State
 
 
 def get_message_text(msg: BaseMessage) -> str:
@@ -67,3 +69,24 @@ async def load_mcp_config_json(filepath: str = "mcp_config.json") -> Dict[str, A
         raise FileNotFoundError(f"Config file not found: {config_path}")
     except json.JSONDecodeError as e:
         raise json.JSONDecodeError(f"Invalid JSON in config file", e.doc, e.pos)
+
+
+def create_state_with_tenant(messages: Sequence[BaseMessage], tenant_id: str) -> State:
+    """Create a new State instance with tenant_id information.
+    
+    This is a utility function for initializing a State object with the provided
+    tenant_id, which is important for multi-tenant systems.
+    
+    Args:
+        messages: Initial sequence of messages for the state
+        tenant_id: The tenant identifier to use - this is required
+        
+    Returns:
+        State: A new State instance with tenant_id set
+    """
+    # Create the state with messages and tenant_id
+    state = State(messages=messages, tenant_id=tenant_id)
+    
+    print(f"[INFO] Initialized state with tenant_id: {tenant_id}")
+    
+    return state

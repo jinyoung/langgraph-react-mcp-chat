@@ -14,6 +14,7 @@ from langchain_core.tools import InjectedToolArg
 from typing_extensions import Annotated
 
 from react_agent.configuration import Configuration
+from react_agent.state import State
 
 
 async def search(
@@ -45,17 +46,25 @@ async def search_internal_docs(
     Returns:
         A dictionary with the search results
     """
+    # Get state from runnable config
+    state = config.get("state", {})
+    if isinstance(state, State):
+        tenant_id = state.tenant_id
+    else:
+        tenant_id = "default"
+    
     # For now, just log to console - will be replaced with actual API call later
-    print(f"[MEMENTO TOOL] Searching internal documents for: {query}")
+    print(f"[MEMENTO TOOL] Searching internal documents for tenant '{tenant_id}': {query}")
     
     # Return fallback data to simulate a successful search
     return {
         "status": "success",
+        "tenant_id": tenant_id,
         "message": f"Found documents related to '{query}'",
         "results": [
             {
                 "title": f"{query} 결과 문서",
-                "content": f"이것은 '{query}'에 대한 검색 결과입니다.",
+                "content": f"이것은 '{query}'에 대한 검색 결과입니다. 테넌트 ID: {tenant_id}",
                 "relevance": 0.95
             }
         ]
@@ -84,18 +93,27 @@ async def add_todo(
     Returns:
         A dictionary with the created todo information
     """
+    # Get state from runnable config
+    state = config.get("state", {})
+    if isinstance(state, State):
+        tenant_id = state.tenant_id
+    else:
+        tenant_id = "default"
+    
     todo_item = {
         "title": title,
+        "tenant_id": tenant_id,
         "due_date": due_date,
         "assignee": assignee,
         "checkpoints": checkpoints or [],
     }
     
     # For now, just log to console - will be replaced with API call later
-    print(f"[TODO TOOL] Adding new todo: {todo_item}")
+    print(f"[TODO TOOL] Adding new todo for tenant '{tenant_id}': {todo_item}")
     
     return {
         "status": "success",
+        "tenant_id": tenant_id,
         "message": "Todo added successfully",
         "todo": todo_item
     }

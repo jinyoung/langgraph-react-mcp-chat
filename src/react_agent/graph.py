@@ -87,6 +87,9 @@ async def call_model(
         system_time=datetime.now(tz=timezone.utc).isoformat()
     )
 
+    # Make sure state is available to the tools
+    config["state"] = state
+
     mcp_json_path = configuration.mcp_tools
 
     mcp_tools_config = await utils.load_mcp_config_json(mcp_json_path)
@@ -165,6 +168,9 @@ builder.add_node(call_model)
 # We'll use a custom tool node function that combines TOOLS with MCP tools
 async def tool_node_with_combined_tools(state, config):
     """A custom tool node that uses combined tools from both TOOLS and MCP tools."""
+    # Make sure state is available to the tools
+    config["state"] = state
+    
     combined_tools = await get_combined_tools(config)
     tool_node = ToolNode(combined_tools)
     return await tool_node.invoke(state, config)
