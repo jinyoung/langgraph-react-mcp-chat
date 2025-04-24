@@ -35,7 +35,13 @@ async def make_graph(mcp_tools: Dict[str, Dict[str, str]], model: BaseChatModel)
         all_tools = TOOLS + mcp_tool_objects
         
         # Create agent with combined tools
-        agent = create_react_agent(model, all_tools, checkpointer=memory)
+        agent = create_react_agent(
+            model, 
+            all_tools, 
+            checkpointer=memory,
+            interrupt_before=["tools"]
+        )
+
         yield agent
 
 
